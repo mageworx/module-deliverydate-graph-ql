@@ -1,0 +1,63 @@
+# Get delivery date selected for specified cart.
+type Query {
+    deliveryDate(
+        cart_id: String! @doc(description: "The unique ID of the cart to query.")
+    ): DeliveryDate
+    @resolver(class: "MageWorx\\DeliveryDateGraphQl\\Model\\Resolver\\DeliveryDate")
+    availableDeliveryDates(
+        cart_id: String! @doc(description: "The unique ID of the cart to query.")
+        method: String @doc(description: "Shipping method code in carriercode_methodcode format.")
+        start_day_index: Int @doc(description: "Offset of days from which the calculation starts.")
+        end_day_index: Int @doc(description: "How many days to calculate.")
+    ): [DeliveryDateConfig]
+    @resolver(class: "MageWorx\\DeliveryDateGraphQl\\Model\\Resolver\\AvailableDeliveryDates")
+}
+# Set delivery date for cart.
+type Mutation {
+    setDeliveryDateOnCart(
+        input: SetDeliveryDateOnCartInput @doc(description: "An input object that applies delivery date data to the cart.")
+    ): Cart
+    @resolver(class: "MageWorx\\DeliveryDateGraphQl\\Model\\Resolver\\SetDeliveryDateOnCart") @doc(description:"Set delivery date for a cart.")
+    removeDeliveryDateFromCart(
+        cart_id: String! @doc(description: "The unique ID of the cart to query.")
+    ): Cart
+    @resolver(class: "MageWorx\\DeliveryDateGraphQl\\Model\\Resolver\\RemoveDeliveryDateFromCart") @doc(description:"Remove delivery date from a cart.")
+}
+# Main delivery date object.
+type DeliveryDate @doc(description: "Contains details about the delivery date.") {
+    day: String @resolver(class: "MageWorx\\DeliveryDateGraphQl\\Model\\Resolver\\DeliveryDay")
+    time: String @resolver(class: "MageWorx\\DeliveryDateGraphQl\\Model\\Resolver\\DeliveryTime")
+    comment: String @resolver(class: "MageWorx\\DeliveryDateGraphQl\\Model\\Resolver\\DeliveryComment")
+}
+# Add delivery date object to Cart type.
+type Cart {
+    delivery_date: DeliveryDate @resolver(class: "MageWorx\\DeliveryDateGraphQl\\Model\\Resolver\\DeliveryDateInCart")
+}
+# Delivery date config.
+type DeliveryDateConfig {
+    method: String @doc(description: "Shipping method code in carriercode_methodcode format.")
+    day_limits: [DeliveryDayLimit] @doc(description: "List of available limits for that method and cart.")
+}
+type DeliveryDayLimit {
+    day_index: Int @doc(description: "Index of the day from today (0).")
+    date_formatted: String @doc(description: "Date formatted using format selected in store configuration.")
+    date: String @doc(description: "Date in regular format Y-m-d.")
+    extra_charge: Float @doc(description: "Extra charge for that day (may be overwritten by time extra charge).")
+    extra_charge_message: String @doc(description: "Extra charge formatted message. May be set in the store configuration.")
+    time_limits: [DeliveryTimeLimit] @doc(description: "Limits by time when available.")
+}
+type DeliveryTimeLimit {
+    from: String @doc(description: "Time from in hh:mm format.")
+    to: String @doc(description: "Time to in hh:mm format.")
+    extra_charge: String @doc(description: "Extra charge for that time slot.")
+}
+
+input DeliveryDateInput @doc(description: "Defines the delivery data.") {
+    day: String! @doc(description: "A string that identifies a delivery day in standard format Y-m-d.")
+    time: String @doc(description: "A string that identifies a delivery time diapason in \"12:00_23:59\" fromat. Must be a valid time.")
+    comment: String @doc(description: "Comment for delivery. Any additional information from customer. Visible to customer by default.")
+}
+input SetDeliveryDateOnCartInput {
+    cart_id: String! @doc(description: "The unique ID of a `Cart` object.")
+    delivery_date: DeliveryDateInput! @doc(description: "Selected delivery date, time (optional) and comment (optional).")
+}
