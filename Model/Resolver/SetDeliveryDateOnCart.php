@@ -7,8 +7,10 @@ declare(strict_types=1);
 
 namespace MageWorx\DeliveryDateGraphQl\Model\Resolver;
 
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
+use Magento\Framework\GraphQl\Exception\GraphQlNoSuchEntityException;
 use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
 use Magento\Framework\GraphQl\Query\Resolver\Value;
 use Magento\Framework\GraphQl\Query\ResolverInterface;
@@ -17,6 +19,7 @@ use Magento\QuoteGraphQl\Model\Cart\GetCartForUser;
 use MageWorx\DeliveryDate\Api\Data\DeliveryDateDataInterfaceFactory;
 use MageWorx\DeliveryDate\Api\Data\DeliveryDateDataInterface;
 use MageWorx\DeliveryDate\Api\QueueManagerInterface;
+use MageWorx\DeliveryDate\Exceptions\QueueException;
 use MageWorx\DeliveryDate\Helper\Data as Helper;
 
 class SetDeliveryDateOnCart implements ResolverInterface
@@ -68,22 +71,24 @@ class SetDeliveryDateOnCart implements ResolverInterface
      * @param array|null $value
      * @param array|null $args
      * @return mixed|Value
-     * @throws \Exception
+     * @throws GraphQlInputException
+     * @throws GraphQlNoSuchEntityException
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @throws \Magento\Framework\GraphQl\Exception\GraphQlAuthorizationException
      */
     public function resolve(Field $field, $context, ResolveInfo $info, array $value = null, array $args = null)
     {
-        if (empty($args['input']['cart_id'])) {
-            throw new GraphQlInputException(__('Required parameter "cart_id" is missing'));
-        }
-        $maskedCartId = $args['input']['cart_id'];
+        $this->validateInput($args['input']);
 
-        if (empty($args['input']['delivery_date'])) {
-            throw new GraphQlInputException(__('Required parameter "delivery_date" is missing'));
-        }
+        $maskedCartId     = $args['input']['cart_id'];
         $deliveryDateData = $args['input']['delivery_date'];
 
         $deliveryDateDataObject = $this->createDeliveryDateDataObjectFromArray($deliveryDateData);
-        $this->queueManager->setDeliveryDateForGuestCart($maskedCartId, $deliveryDateDataObject);
+        try {
+            $this->queueManager->setDeliveryDateForGuestCart($maskedCartId, $deliveryDateDataObject);
+        } catch (QueueException|LocalizedException $e) {
+            throw new GraphQlNoSuchEntityException(__($e->getMessage()));
+        }
 
         $storeId = (int)$context->getExtensionAttributes()->getStore()->getId();
         $cart    = $this->getCartForUser->execute($maskedCartId, $context->getUserId(), $storeId);
@@ -102,11 +107,9 @@ class SetDeliveryDateOnCart implements ResolverInterface
         /** @var DeliveryDateDataInterface $deliveryDateDataObject */
         $deliveryDateDataObject = $this->deliveryDateDataFactory->create();
 
-        if ($deliveryDateData['day']) {
-            $deliveryDateDataObject->setDeliveryDay($deliveryDateData['day']);
-        }
+        $deliveryDateDataObject->setDeliveryDay($deliveryDateData['day']);
 
-        if ($deliveryDateData['time']) {
+        if (!empty($deliveryDateData['time'])) {
             $deliveryDateDataObject->setDeliveryTime($deliveryDateData['time']);
             $parts       = $this->helper->parseFromToPartsFromTimeString($deliveryDateData['time']);
             $hoursFrom   = $parts['from']['hours'] ?? '';
@@ -119,10 +122,32 @@ class SetDeliveryDateOnCart implements ResolverInterface
                                    ->setDeliveryMinutesTo($minutesTo);
         }
 
-        if ($deliveryDateData['comment']) {
+        if (!empty($deliveryDateData['comment'])) {
             $deliveryDateDataObject->setDeliveryComment($deliveryDateData['comment']);
         }
 
         return $deliveryDateDataObject;
+    }
+
+    /**
+     * @param array $inputData
+     * @return void
+     * @throws GraphQlInputException
+     */
+    protected function validateInput(array $inputData): void
+    {
+        if (empty($inputData['cart_id'])) {
+            throw new GraphQlInputException(__('Required parameter "cart_id" is missing'));
+        }
+
+        if (empty($inputData['delivery_date'])) {
+            throw new GraphQlInputException(__('Required parameter "delivery_date" is missing'));
+        }
+
+        try {
+            new \DateTime($inputData['delivery_date']['day']);
+        } catch (\Exception $e) {
+            throw new GraphQlInputException(__('The Delivery Day must be specified in Y-m-d format, like 2025-06-15.'));
+        }
     }
 }
