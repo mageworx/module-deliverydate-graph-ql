@@ -2,7 +2,7 @@
     "name": "mageworx/module-deliverydate-graph-ql",
     "description": "Graph QL Addon for MageWorx Delivery Date Extension",
     "require": {
-        "mageworx/module-deliverydate": ">=1.15.4",
+        "mageworx/module-deliverydate": ">=1.16.2",
         "magento/framework": ">=103",
         "magento/module-graph-ql": ">=100"
     },
