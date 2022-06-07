@@ -144,10 +144,18 @@ class SetDeliveryDateOnCart implements ResolverInterface
             throw new GraphQlInputException(__('Required parameter "delivery_date" is missing'));
         }
 
+        if (empty($inputData['delivery_date']['time'])) {
+            if (!preg_match('^\d{1,2}:\d{1,2}_\d{1,2}:\d{1,2}$', $inputData['delivery_date']['time'])) {
+                throw new GraphQlInputException(
+                    __('The delivery time must be specified in 00:00_23:59 format, like 10:30_19:00.')
+                );
+            }
+        }
+
         try {
             new \DateTime($inputData['delivery_date']['day']);
         } catch (\Exception $e) {
-            throw new GraphQlInputException(__('The Delivery Day must be specified in Y-m-d format, like 2025-06-15.'));
+            throw new GraphQlInputException(__('The delivery day must be specified in Y-m-d format, like 2025-06-15.'));
         }
     }
 }

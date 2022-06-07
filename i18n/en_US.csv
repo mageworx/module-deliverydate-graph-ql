@@ -1,0 +1,6 @@
+"""cart_id"" value should be specified","""cart_id"" value should be specified"
+"""model"" value should be specified","""model"" value should be specified"
+"Required parameter ""cart_id"" is missing","Required parameter ""cart_id"" is missing"
+"Required parameter ""delivery_date"" is missing","Required parameter ""delivery_date"" is missing"
+"The delivery time must be specified in 00:00_23:59 format, like 10:30_19:00.","The delivery time must be specified in 00:00_23:59 format, like 10:30_19:00."
+"The delivery day must be specified in Y-m-d format, like 2025-06-15.","The delivery day must be specified in Y-m-d format, like 2025-06-15."
