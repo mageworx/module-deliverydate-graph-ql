@@ -85,7 +85,7 @@ class SetDeliveryDateOnCart implements ResolverInterface
 
         $deliveryDateDataObject = $this->createDeliveryDateDataObjectFromArray($deliveryDateData);
         try {
-            $this->queueManager->setDeliveryDateForGuestCart($maskedCartId, $deliveryDateDataObject);
+            $this->queueManager->setDeliveryDateForGuestCart($maskedCartId, $deliveryDateDataObject, null);
         } catch (QueueException|LocalizedException $e) {
             throw new GraphQlNoSuchEntityException(__($e->getMessage()));
         }
