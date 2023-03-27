@@ -13,6 +13,7 @@ use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
 use Magento\Framework\GraphQl\Query\Resolver\Value;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
+use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\QuoteGraphQl\Model\Cart\GetCartForUser;
 use MageWorx\DeliveryDate\Api\QueueManagerInterface;
 use MageWorx\DeliveryDate\Api\Repository\QueueRepositoryInterface;
@@ -35,18 +36,26 @@ class RemoveDeliveryDateFromCart implements \Magento\Framework\GraphQl\Query\Res
     protected $getCartForUser;
 
     /**
+     * @var CartRepositoryInterface
+     */
+    protected $cartRepository;
+
+    /**
      * @param QueueManagerInterface $queueManager
      * @param QueueRepositoryInterface $queueRepository
      * @param GetCartForUser $getCartForUser
+     * @param CartRepositoryInterface $cartRepository
      */
     public function __construct(
         QueueManagerInterface    $queueManager,
         QueueRepositoryInterface $queueRepository,
-        GetCartForUser           $getCartForUser
+        GetCartForUser           $getCartForUser,
+        CartRepositoryInterface  $cartRepository
     ) {
         $this->queueManager    = $queueManager;
         $this->queueRepository = $queueRepository;
         $this->getCartForUser  = $getCartForUser;
+        $this->cartRepository  = $cartRepository;
     }
 
     /**
@@ -76,8 +85,14 @@ class RemoveDeliveryDateFromCart implements \Magento\Framework\GraphQl\Query\Res
             // Delivery date has been not set, nothing to do
         }
 
-        $storeId = (int)$context->getExtensionAttributes()->getStore()->getId();
-        $cart    = $this->getCartForUser->execute($maskedCartId, $context->getUserId(), $storeId);
+        $storeId         = (int)$context->getExtensionAttributes()->getStore()->getId();
+        $cart            = $this->getCartForUser->execute($maskedCartId, $context->getUserId(), $storeId);
+        $shippingAddress = $cart->getShippingAddress();
+        if ($shippingAddress instanceof \Magento\Quote\Api\Data\AddressInterface) {
+            $this->queueManager->cleanDeliveryDateDataByQuoteAddress($shippingAddress);
+            $shippingAddress->setCollectShippingRates(true)->collectShippingRates();
+            $this->cartRepository->save($cart);
+        }
 
         return [
             'model' => $cart
