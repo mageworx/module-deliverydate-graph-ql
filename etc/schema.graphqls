@@ -42,14 +42,15 @@ type DeliveryDayLimit {
     day_index: Int @doc(description: "Index of the day from today (0).")
     date_formatted: String @doc(description: "Date formatted using format selected in store configuration.")
     date: String @doc(description: "Date in regular format Y-m-d.")
-    extra_charge: Float @doc(description: "Extra charge for that day (may be overwritten by time extra charge).")
+    extra_charge: Float @doc(description: "Extra charge for that day in the currency of the cart (may be overwritten by time extra charge).")
+    extra_charge_formatted: String @doc(description: "Extra charge formatted according selected locale (with currency symbol).")
     extra_charge_message: String @doc(description: "Extra charge formatted message. May be set in the store configuration.")
     time_limits: [DeliveryTimeLimit] @doc(description: "Limits by time when available.")
 }
 type DeliveryTimeLimit {
     from: String @doc(description: "Time from in hh:mm format.")
     to: String @doc(description: "Time to in hh:mm format.")
-    extra_charge: String @doc(description: "Extra charge for that time slot.")
+    extra_charge: String @doc(description: "Extra charge for that time slot in the currency of the cart.")
     extra_charge_formatted: String @doc(description: "Formatted Extra charge for that time slot.")
 }
 
