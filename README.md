@@ -91,17 +91,25 @@ DeliveryDayLimit object:
 day_index: Int                      - Index of the day from today (from 0).
 date_formatted: String              - Date formatted using format selected in store configuration.
 date: String                        - Date in standard Y-m-d format.
-extra_charge: Float                 - Extra charge for that day (may be overwritten by time limits extra charge).
-extra_charge_message: String        - Extra charge formatted message.
+extra_charge: ExtraCharge           - Extra charge for that day.
 time_limits: [DeliveryTimeLimit]    - Limits by time when available.
 ```
 
 DeliveryTimeLimit object:
 
 ```
-from: String            - Time from in hh:mm format.
-to: String              - Time to in hh:mm format.
-extra_charge: String    - Extra charge for that time slot.
+from: String              - Time from in hh:mm format.
+to: String                - Time to in hh:mm format.
+extra_charge: ExtraCharge - Extra charge for that time slot. Summed up with a surcharge from the delivery day settings.
+```
+
+ExtraCharge object:
+
+```
+amount: Float           - Amount in selected currency (in cart currency).
+formatted: String       - Formatted according selected locale (with currency symbol).
+currency_symbol: String - Currency symbol.
+currency_code: String   - Currency code.
 ```
 
 **Request:**
@@ -119,12 +127,21 @@ query ($magentoCartId: String!) {
             day_index
             date_formatted
             date
-            extra_charge
-            extra_charge_message
+            extra_charge {
+                amount
+                formatted
+                currency_code
+                currency_symbol
+            }
             time_limits {
                 from
                 to
-                extra_charge
+                extra_charge {
+                    amount
+                    formatted
+                    currency_code
+                    currency_symbol
+                }
             }
         }
     }
@@ -135,71 +152,91 @@ query ($magentoCartId: String!) {
 
 ```json
 {
-    "data": {
-        "availableDeliveryDates": [
-            {
-                "method": "flatrate_flatrate",
-                "day_limits": [
-                    {
-                        "day_index": 3,
-                        "date_formatted": "2022-05-11",
-                        "date": "2022-05-11",
-                        "extra_charge": 0,
-                        "extra_charge_message": "",
-                        "time_limits": [
-                            {
-                                "from": "10:00",
-                                "to": "12:00",
-                                "extra_charge": "US$2.00"
-                            },
-                            {
-                                "from": "14:00",
-                                "to": "16:00",
-                                "extra_charge": "US$5.00"
-                            },
-                            {
-                                "from": "17:05",
-                                "to": "23:30",
-                                "extra_charge": ""
-                            }
-                        ]
-                    },
-                    {
-                        "day_index": 4,
-                        "date_formatted": "2022-05-12",
-                        "date": "2022-05-12",
-                        "extra_charge": 0,
-                        "extra_charge_message": "",
-                        "time_limits": []
-                    },
-                    {
-                        "day_index": 5,
-                        "date_formatted": "2022-05-13",
-                        "date": "2022-05-13",
-                        "extra_charge": 0,
-                        "extra_charge_message": "",
-                        "time_limits": []
-                    },
-                    {
-                        "day_index": 8,
-                        "date_formatted": "2022-05-16<span class=\"data-item__price\"> +US$15.00</span>",
-                        "date": "2022-05-16",
-                        "extra_charge": 15,
-                        "extra_charge_message": "<span class=\"data-item__price\"> +US$15.00</span>",
-                        "time_limits": []
-                    },
-                    {
-                        "day_index": 9,
-                        "date_formatted": "2022-05-17",
-                        "date": "2022-05-17",
-                        "extra_charge": 0,
-                        "extra_charge_message": "",
-                        "time_limits": []
-                    }
-                ]
-            }
+  "data": {
+    "availableDeliveryDates": [
+      {
+        "method": "flatrate_flatrate",
+        "day_limits": [
+          {
+            "day_index": 5,
+            "date_formatted": "14-June-2023",
+            "date": "2023-06-14",
+            "extra_charge": null,
+            "time_limits": [
+              {
+                "from": "09:00",
+                "to": "12:00",
+                "extra_charge": {
+                  "amount": 0,
+                  "formatted": "",
+                  "currency_code": "EUR",
+                  "currency_symbol": "€"
+                }
+              },
+              {
+                "from": "11:00",
+                "to": "16:00",
+                "extra_charge": {
+                  "amount": 0,
+                  "formatted": "",
+                  "currency_code": "EUR",
+                  "currency_symbol": "€"
+                }
+              },
+              {
+                "from": "15:00",
+                "to": "20:00",
+                "extra_charge": {
+                  "amount": 4.5409,
+                  "formatted": "€4.54",
+                  "currency_code": "EUR",
+                  "currency_symbol": "€"
+                }
+              }
+            ]
+          },
+          {
+            "day_index": 6,
+            "date_formatted": "15-June-2023",
+            "date": "2023-06-15",
+            "extra_charge": null,
+            "time_limits": [
+              {
+                "from": "09:00",
+                "to": "12:00",
+                "extra_charge": {
+                  "amount": 0,
+                  "formatted": "",
+                  "currency_code": "EUR",
+                  "currency_symbol": "€"
+                }
+              },
+              {
+                "from": "11:00",
+                "to": "16:00",
+                "extra_charge": {
+                  "amount": 0,
+                  "formatted": "",
+                  "currency_code": "EUR",
+                  "currency_symbol": "€"
+                }
+              },
+              {
+                "from": "15:00",
+                "to": "20:00",
+                "extra_charge": {
+                  "amount": 4.5409,
+                  "formatted": "€4.54",
+                  "currency_code": "EUR",
+                  "currency_symbol": "€"
+                }
+              }
+            ]
+          }
         ]
-    }
+      }
+    ]
+  }
 }
 ```
 
