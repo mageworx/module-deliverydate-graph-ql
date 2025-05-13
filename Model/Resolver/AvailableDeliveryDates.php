@@ -66,7 +66,7 @@ class AvailableDeliveryDates implements ResolverInterface
      * @return mixed|Value
      * @throws \Exception
      */
-    public function resolve(Field $field, $context, ResolveInfo $info, array $value = null, array $args = null)
+    public function resolve(Field $field, $context, ResolveInfo $info, ?array $value = null, ?array $args = null)
     {
         if (!isset($args['cart_id'])) {
             throw new LocalizedException(__('"cart_id" value should be specified'));
